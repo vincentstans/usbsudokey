@@ -1,0 +1,33 @@
+#!/bin/bash
+## This file should be in /usr/local/sbin with chmod 4740
+## Call this script with arguments username and status
+## USERNAME= the user you like to give sudo permission without password
+## STATUS = on: enabled / off: disabled
+## This script is executed when a usb-device is plugged-in or removed.
+
+## Variables from arguments passed by udev rules
+_USERNAME=$1
+_STATUS=$2
+
+## If argument STATUS "on" then create a file for user in /etc/sudoers.d/
+if [[ ${_STATUS} == on ]]; then
+echo "${_USERNAME} ALL=(ALL) NOPASSWD: ALL"|tee /etc/sudoers.d/${_USERNAME}
+##  Create a file for polkit
+cat << EOF > /etc/polkit-1/rules.d/50-usb-sudo.rules
+polkit.addRule(function(action, subject) {
+        subject.isInGroup("${_USERNAME}")
+    {
+        return polkit.Result.YES;
+    }
+});
+EOF
+exit 0
+fi
+
+## If argument STATUS "off" then remove the user files
+if [[ ${_STATUS} == off ]]; then
+rm /etc/sudoers.d/${_USERNAME} /etc/polkit-1/rules.d/50-usb-sudo.rules
+exit 0
+fi
+
+exit 1
