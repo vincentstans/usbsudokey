@@ -1,5 +1,6 @@
 #!/bin/bash
 ## This file should be in /usr/local/sbin with chmod 4740
+## This file can also be used with usbip on a remote ssh
 ## Call this script with arguments username and status
 ## USERNAME= the user you like to give sudo permission without password
 ## STATUS = on: enabled / off: disabled
