@@ -1,0 +1,10 @@
+## This file is in your home folder on a remote ssh /home/USERNAME/.bashrc
+## Add these contents to your .bashrc 
+if [[ -n $SSH_CONNECTION ]] ; then
+    echo "I am logged in remotely"
+    sudo usbip.sh login
+    trap '/usr/local/sbin/usbip.sh logout' EXIT
+fi
+## USERNAME should have priviledges to execute /usr/local/sbin/usbip.sh without password
+## sudo visudo -f /etc/sudoers.d/usbip
+## USERNAME ALL=NOPASSWD: /usr/local/sbin/usbip.sh
