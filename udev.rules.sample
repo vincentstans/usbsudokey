@@ -1,0 +1,16 @@
+use lsusb to find your device idVendor and idProduct you find them after ID and are represented like abcd:1234 where the part before the semi-colon is the idVendor
+and the part after the semi-colon is the idProduct.
+For the serial you can use the command  udevadm info --attribute-walk --name=/dev/sdX  this will walk you trough the connection from the motherboard to the flash drive.
+you must find the correct matching stub as you cannot mix values from sepperate stubs.
+
+create a file in /etc/udev/rules.d/ name it 90-usb-sudo.rules or change usb-sudo to what ever you want.
+use below line as a starting point you may ommit ATTRS{serial]=="1234567890", from the line if you want 
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="abcd", ATTRS{idProduct}=="1234", ATTRS{serial}=="1234567890", RUN+="/usr/local/sbin/sudo.udev USER on"
+
+for the action remove you need different id match to check which you can use monitor the command   udevadm monitor --kernel --property --subsystem-match=usb 
+while you unplug the usb flash drive
+add this ACTION below the other ACTION
+ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="abc/1234/100", RUN+="/usr/local/sbin/sudo.udev USER off"
+
+in both lines change the RUN+= USER to the flashdrive owner username
+continue to sudo.udev
