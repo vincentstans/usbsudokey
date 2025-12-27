@@ -1,0 +1,9 @@
+#!/bin/bash
+## This file should be in /usr/local/sbin/
+## This script starts the USB host and should be started from the local machine
+## This file is used to share a USB device with a remote SSH machine
+
+sudo modprobe usbip-host
+sudo usbipd &
+_BUS=`sudo usbip list -l | grep abcd | head -n1 | cut -dd -f2 | cut -d\( -f1`
+sudo usbip bind -b $_BUS
