@@ -1,43 +1,52 @@
 #!/bin/bash
-## This file should be in /usr/local/sbin/ of a remote ssh server
-## This file should be executed by root chmod 4740 
-## user should be able to run this script without sudo password! :$ sudo visudo -f /etc/sudoers.d/usbip 
-## USERNAME ALL=NOPASSWD: /usr/local/sbin/usbip.sh
-## Argument login or logout
+## EXIT 0 = Normal / EXIT 1 = USB HOST ERROR / EXIT 2 = OTHER SSH SESSION STILL OPEN / EXIT 3 = invalid aargument
 _ARG=$1
 
-## On Login do STARTUP
 STARTUP() {
 if ! [[ -f /var/run/usbip.pid ]]; then
-modprobe vhci-hcd
-## Client should have shareusb running
-_IP=`pinky -wf|awk '{print $5}'`
-_BUS=`usbip list -r $_IP | grep [0-9]-[0-9]: | cut -d: -f1`
+_CIP=`pinky -wf|awk '{print $5}'`
+_IP=`echo $_CIP|cut -d' ' -f1`
+  if nc -z $_IP 3240;then
+        _BUS=`usbip list -r $_IP | grep [0-9]-[0-9]: | cut -d: -f1`
+  else
+        echo "usbip host not running"
+        exit 1
+  fi
 
-if [[ ! -z $_BUS ]]; then
-usbip attach -r $_IP -b $_BUS
-_EXIT=$?
-fi
+  if [[ ! -z $_BUS ]]; then
+        modprobe vhci-hcd
+        usbip attach -r laptop -b $_BUS
+        _EXIT=$?
+        echo "Connected USB BUS $_BUS"
+  fi
 
-if [[ $_EXIT == 0 ]]; then
-udevadm trigger
-fi
-
-echo $$ > /var/run/usbip.pid
+  if [[ $_EXIT == 0 ]]; then
+        echo "Rescan udev rules"
+        udevadm trigger
+        echo $$ > /var/run/usbip.pid
+  else
+        echo "USB host not sharing ?"
+        exit 1
+  fi
+echo " Remote USB available "
 exit 0
 fi
 }
 
-## On Logout run SHUTDOWN
 SHUTDOWN() {
 if [[ -f /var/run/usbip.pid ]]; then
 sudo rm /var/run/usbip.pid
-#echo "[`date`] -- clean ssh exit"|sudo tee -a /var/log/ssh-logout.log
+#echo "`date` clean ssh exit"|sudo tee -a /var/log/ssh-logout.log
 sudo usbip detach -p 00
 sudo modprobe -r vhci-hcd
 exit 0
 fi
 }
+
+if ! [[ $_ARG == log* ]]; then
+echo "Wrong argument"
+exit 3
+fi
 
 if [[ $_ARG == login ]]; then
 STARTUP
@@ -46,4 +55,3 @@ SHUTDOWN
 else
 exit 2
 fi
-## exit 2 other ssh session still running
