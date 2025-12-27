@@ -13,4 +13,5 @@ add this ACTION below the other ACTION
 ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="abc/1234/100", RUN+="/usr/local/sbin/sudo.udev USER off"
 
 in both lines change the RUN+= USER to the flashdrive owner username
+These udev rules can also be used with usbip
 continue to sudo.udev
